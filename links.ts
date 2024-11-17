@@ -15,40 +15,43 @@ interface UrlSpan {
  *  - spans: An array of UrlSpan objects for each extracted URL.
  *  - modifiedText: The text with all [text](url) parts removed.
  */
-export function parseMarkdownUrl(text: string): { spans: UrlSpan[]; modifiedText: string } {
-  const spans: UrlSpan[] = [];
 
-  // Regular expression to match markdown links: [text](url)
-  // Captures 'text' in group 1 and 'url' in group 2
-  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+export function processMarkdownLinks(text: string) {
+  const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const spans = [];
+  let modifiedText = '';
+  let lastIndex = 0;
+  let match;
 
-  // Array to hold all matches with their indices
-  const matches: RegExpExecArray[] = [];
-  let match: RegExpExecArray | null;
-
-  // Find all matches
   while ((match = markdownLinkRegex.exec(text)) !== null) {
-    matches.push(match);
+      const [fullMatch, linkText, url] = match;
+      const matchIndex = match.index;
+
+      // Append text before the current match to modifiedText
+      modifiedText += text.slice(lastIndex, matchIndex);
+
+      // The start index of the URL in modifiedText
+      const spanStart = modifiedText.length;
+
+      // Append the link text (without markdown syntax) to modifiedText
+      modifiedText += linkText;
+
+      // The end index of the URL in modifiedText
+      const spanEnd = spanStart + linkText.length;
+
+      // Add the span with correct indices
+      spans.push({
+          start: spanStart,
+          end: spanEnd,
+          url: url,
+      });
+
+      // Update lastIndex to the end of the current match
+      lastIndex = matchIndex + fullMatch.length;
   }
 
-  for (const m of matches) {
-    console.log(m)
-    const url = m[2];
-    const urlStart = m.index;
-    const urlEnd = urlStart + m[1].length;
-    spans.push({
-        start: urlStart,
-        end: urlEnd,
-        url: url,
-    });
-  }
-  // Remove the [text](url) parts from the text
-  // To avoid messing up the indices, remove from the end towards the start
-  let modifiedText = text;
-  for (let i = matches.length - 1; i >= 0; i--) {
-      const m = matches[i];
-      modifiedText =
-          modifiedText.slice(0, m.index) + m[1] + modifiedText.slice(m.index + m[0].length);
-  }
+  // Append any remaining text after the last match
+  modifiedText += text.slice(lastIndex);
+
   return { spans, modifiedText };
 }

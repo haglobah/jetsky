@@ -1,6 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { AtpAgent, Facet } from '@atproto/api'
-import { parseMarkdownUrl } from 'links'
+import { processMarkdownLinks } from 'links'
 
 type JetskySettings = {
   identifier: string;
@@ -30,7 +30,7 @@ export default class Jetsky extends Plugin {
   }
 
   private __login() {
-    if (!this.settings.identifier || !this.bskyPassword) {
+    if (!this.settings.identifier || !this.settings.bskyPassword) {
       this.__handleInfoMessage("Either Identifier or bskyPassword don't exist");
       return;
     }
@@ -41,7 +41,7 @@ export default class Jetsky extends Plugin {
     this.agent
       .login({
         identifier: this.settings.identifier,
-        password: this.bskyPassword,
+        password: this.settings.bskyPassword,
       })
       .then(() => {
         this.__handleInfoMessage("Login succeed");
@@ -61,7 +61,7 @@ export default class Jetsky extends Plugin {
       return;
     }
 
-		const { spans, modifiedText } = parseMarkdownUrl(text)
+		const { spans, modifiedText } = processMarkdownLinks(text)
 
 		const facets: Facet[] = []
 		for (const span of spans) {
@@ -79,12 +79,15 @@ export default class Jetsky extends Plugin {
 			})
 		}
 
+		const currentSelectionPost = {
+			$type: "app.bsky.feed.post",
+			text: modifiedText,
+			createdAt: (new Date()).toISOString(),
+			facets: facets,
+		}
+
     this.agent
-      .post({
-        $type: "app.bsky.feed.post",
-        modifiedText,
-        facets: facets,
-      })
+      .post(currentSelectionPost)
       .then(() => {
         this.__handleInfoMessage("Post message succeeded");
       })
@@ -120,16 +123,6 @@ export default class Jetsky extends Plugin {
 			name: "Post the current selection on Bluesky",
 			editorCallback: (editor: Editor) => {
 				this.postOfSelection(editor.getSelection())
-			}
-		})
-
-		this.addCommand({
-			id: "clear-bsky-password",
-			name: "Delete the Bluesky password from localStorage",
-			callback: () => {
-				const { safeStorage } = window.require('electron')
-				// @ts-ignore
-				this.bskyPassword = this.app.saveLocalStorage("bskyPassword", null)
 			}
 		})
 
