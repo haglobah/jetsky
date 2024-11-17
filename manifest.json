@@ -1,0 +1,10 @@
+{
+	"id": "jetsky",
+	"name": "Jetsky",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Interact with BlueSky from Obsidian",
+	"author": "haglobah",
+	"authorUrl": "https://github.com/haglobah",
+	"isDesktopOnly": false
+}
