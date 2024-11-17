@@ -1,6 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
-import { AtpAgent } from '@atproto/api'
+import { AtpAgent, Facet } from '@atproto/api'
+import { parseMarkdownUrl } from 'links'
 
 type JetskySettings = {
   identifier: string;
@@ -61,11 +61,29 @@ export default class Jetsky extends Plugin {
       return;
     }
 
+		const { spans, modifiedText } = parseMarkdownUrl(text)
+
+		const facets: Facet[] = []
+		for (const span of spans) {
+			facets.push({
+				index: {
+					byteStart: span.start,
+					byteEnd: span.end,
+				},
+				features: [
+					{
+						$type: "app.bsky.richtext.facet#link",
+						uri: span.url,
+					}
+				]
+			})
+		}
+
     this.agent
       .post({
         $type: "app.bsky.feed.post",
-        text,
-        facets: [],
+        modifiedText,
+        facets: facets,
       })
       .then(() => {
         this.__handleInfoMessage("Post message succeeded");
