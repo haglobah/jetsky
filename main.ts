@@ -129,16 +129,6 @@ export default class Jetsky extends Plugin {
 				this.postOfSelection(editor)
 			}
 		})
-
-		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu) => {
-				menu.addItem((item) => {
-					item.setTitle("Post selection to Bluesky").onClick(() => {
-						this.postOfSelection(getSelection()?.toString() ?? null)
-					})
-				})
-			})
-		)
 	}
 
 	onunload(): void {}
