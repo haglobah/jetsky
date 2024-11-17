@@ -1,13 +1,4 @@
 /**
- * Interface representing an extracted URL span.
- */
-interface UrlSpan {
-  start: number; // Start index of the URL in the original text
-  end: number;   // End index of the URL in the original text
-  url: string;   // The extracted URL
-}
-
-/**
  * Parses URLs from markdown text and removes the [text](url) parts.
  *
  * @param text - The markdown text to parse.
@@ -16,9 +7,15 @@ interface UrlSpan {
  *  - modifiedText: The text with all [text](url) parts removed.
  */
 
+interface UrlSpan {
+  start: number,
+  end: number,
+  url: string,
+}
+
 export function processMarkdownLinks(text: string) {
   const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const spans = [];
+  const spans: UrlSpan[] = [];
   let modifiedText = '';
   let lastIndex = 0;
   let match;

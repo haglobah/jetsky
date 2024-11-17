@@ -1,6 +1,7 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { AtpAgent, Facet } from '@atproto/api'
-import { processMarkdownLinks } from 'links'
+import { processMarkdownLinks } from 'src/links'
+import { parseMentions, processMentions } from 'src/mentions'
 
 type JetskySettings = {
   identifier: string;
@@ -63,10 +64,11 @@ export default class Jetsky extends Plugin {
       return;
     }
 
-		const { spans, modifiedText } = processMarkdownLinks(text)
+		const { urlSpans, modifiedText } = processMarkdownLinks(text)
+		const { mentionSpans } = parseMentions(modifiedText)
 
 		const facets: Facet[] = []
-		for (const span of spans) {
+		for (const span of urlSpans) {
 			facets.push({
 				index: {
 					byteStart: span.start,
@@ -76,6 +78,21 @@ export default class Jetsky extends Plugin {
 					{
 						$type: "app.bsky.richtext.facet#link",
 						uri: span.url,
+					}
+				]
+			})
+		}
+		processMentions(facets, )
+		for (const span of mentionSpans) {
+			facets.push({
+				index: {
+					byteStart: span.start,
+					byteEnd: span.end,
+				},
+				features: [
+					{
+						$type: "app.bsky.richtext.facet#mention",
+						handle: span.url,
 					}
 				]
 			})
@@ -129,16 +146,6 @@ export default class Jetsky extends Plugin {
 				this.postOfSelection(editor)
 			}
 		})
-
-		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu) => {
-				menu.addItem((item) => {
-					item.setTitle("Post selection to Bluesky").onClick(() => {
-						this.postOfSelection(getSelection()?.toString() ?? null)
-					})
-				})
-			})
-		)
 	}
 
 	onunload(): void {}
