@@ -52,8 +52,10 @@ export default class Jetsky extends Plugin {
       });
   }
 
-  private async postOfSelection(text: string | null) {
-    if (!this.__checkAuthenticated()) {
+  private async postOfSelection(editor: Editor) {
+		const text = editor.getSelection()
+		
+		if (!this.__checkAuthenticated()) {
       return;
     }
     if (!text || ![...text].length) {
@@ -78,11 +80,12 @@ export default class Jetsky extends Plugin {
 				]
 			})
 		}
+		const now = (new Date()).toISOString()
 
 		const currentSelectionPost = {
 			$type: "app.bsky.feed.post",
 			text: modifiedText,
-			createdAt: (new Date()).toISOString(),
+			createdAt: now,
 			facets: facets,
 		}
 
@@ -90,6 +93,7 @@ export default class Jetsky extends Plugin {
       .post(currentSelectionPost)
       .then(() => {
         this.__handleInfoMessage("Post message succeeded");
+				editor.replaceSelection(`> posted ${now}\n` + text)
       })
       .catch((error) => {
         console.error(error);
@@ -122,7 +126,7 @@ export default class Jetsky extends Plugin {
 			id: "post-selection",
 			name: "Post the current selection on Bluesky",
 			editorCallback: (editor: Editor) => {
-				this.postOfSelection(editor.getSelection())
+				this.postOfSelection(editor)
 			}
 		})
 
