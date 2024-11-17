@@ -18,7 +18,7 @@ interface UrlSpan {
 
 export function processMarkdownLinks(text: string) {
   const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const spans = [];
+  const spans: UrlSpan[] = [];
   let modifiedText = '';
   let lastIndex = 0;
   let match;
